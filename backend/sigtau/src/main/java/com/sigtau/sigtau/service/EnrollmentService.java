@@ -19,13 +19,15 @@ public class EnrollmentService {
     private final TutoringRepository tutoringRepository;
     private final ReasonRepository reasonRepository;
     private final CurrentUserService currentUser;
+    private final UserRepository userRepository;
 
     public EnrollmentService(EnrollmentRepository enrollmentRepository, TutoringRepository tutoringRepository,
-                             ReasonRepository reasonRepository, CurrentUserService currentUser) {
+                             ReasonRepository reasonRepository, CurrentUserService currentUser, UserRepository userRepository) {
         this.enrollmentRepository = enrollmentRepository;
         this.tutoringRepository = tutoringRepository;
         this.reasonRepository = reasonRepository;
         this.currentUser = currentUser;
+        this.userRepository = userRepository;
     }
 
     private EnrollmentResponseDTO toDTO(Enrollment e) {
@@ -57,7 +59,8 @@ public class EnrollmentService {
 
     /** El estudiante sale del JWT, no del cuerpo de la petición. */
     public EnrollmentResponseDTO enroll(Long tutoringId) {
-        User student = currentUser.get();
+        User student = userRepository.findByIdForUpdate(currentUser.get().getId())
+                .orElseThrow(() -> new AccessDeniedException("Usuario no encontrado"));
         // Bloqueo de la fila: dos inscripciones simultáneas no pueden tomar el mismo último cupo
         Tutoring t = tutoringRepository.findByIdForUpdate(tutoringId)
                 .orElseThrow(() -> new RuntimeException("Tutoría no encontrada"));
@@ -91,7 +94,7 @@ public class EnrollmentService {
     }
 
     public EnrollmentResponseDTO cancel(Long enrollmentId, CancelEnrollmentDTO dto) {
-        Enrollment e = enrollmentRepository.findById(enrollmentId)
+        Enrollment e = enrollmentRepository.findByIdForUpdate(enrollmentId)
                 .orElseThrow(() -> new RuntimeException("Inscripción no encontrada"));
         User me = currentUser.get();
         boolean isAdmin = currentUser.hasRole("ADMIN");

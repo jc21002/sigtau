@@ -1,0 +1,50 @@
+name: Verify SIGTAU
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: sigtau_test
+          POSTGRES_USER: sigtau
+          POSTGRES_PASSWORD: test-only
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U sigtau -d sigtau_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Unit and PostgreSQL integration tests
+        working-directory: backend/sigtau
+        env:
+          TEST_DB_URL: jdbc:postgresql://localhost:5432/sigtau_test
+          TEST_DB_DRIVER: org.postgresql.Driver
+          TEST_DB_USER: sigtau
+          TEST_DB_PASSWORD: test-only
+        run: bash mvnw --batch-mode test
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend/sigtau-frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/sigtau-frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

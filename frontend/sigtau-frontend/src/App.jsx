@@ -54,9 +54,11 @@ function App() {
             <Route path="/subjects/new" element={guard(ADMIN, <SubjectForm />)} />
             <Route path="/subjects/edit/:id" element={guard(ADMIN, <SubjectForm />)} />
             <Route path="/modalities" element={guard(ADMIN, <Modalities />)} />
-            <Route path="/create-modality" element={guard(ADMIN, <CreateModality />)} />
+            <Route path="/modalities/edit/:id" element={guard(ADMIN, <CreateModality key="edit" />)} />
+            <Route path="/create-modality" element={guard(ADMIN, <CreateModality key="new" />)} />
             <Route path="/reasons" element={guard(ADMIN, <Reasons />)} />
-            <Route path="/create-reason" element={guard(ADMIN, <CreateReason />)} />
+            <Route path="/reasons/edit/:id" element={guard(ADMIN, <CreateReason key="edit" />)} />
+            <Route path="/create-reason" element={guard(ADMIN, <CreateReason key="new" />)} />
             <Route path="/users" element={guard(ADMIN, <Users />)} />
             <Route path="/users/new" element={guard(ADMIN, <UserForm />)} />
             <Route path="/users/edit/:id" element={guard(ADMIN, <UserForm />)} />

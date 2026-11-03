@@ -12,13 +12,9 @@ function ManageTutorings() {
     const [items, setItems] = useState([]);
     const [msg, setMsg] = useState(null);
 
-    const load = useCallback(async () => {
-        try {
-            setItems(await getMyTutorings());
-        } catch (e) {
-            setMsg({ type: "danger", text: e.message });
-        }
-    }, []);
+    const load = useCallback(() => getMyTutorings()
+        .then(setItems)
+        .catch(e => setMsg({ type: "danger", text: e.message })), []);
 
     useEffect(() => { load(); }, [load]);
 

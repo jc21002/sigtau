@@ -11,13 +11,9 @@ function Users() {
     const [users, setUsers] = useState([]);
     const [msg, setMsg] = useState(null);
 
-    const load = useCallback(async () => {
-        try {
-            setUsers(await getUsers());
-        } catch (e) {
-            setMsg({ type: "danger", text: e.message });
-        }
-    }, []);
+    const load = useCallback(() => getUsers()
+        .then(setUsers)
+        .catch(e => setMsg({ type: "danger", text: e.message })), []);
 
     useEffect(() => { load(); }, [load]);
 

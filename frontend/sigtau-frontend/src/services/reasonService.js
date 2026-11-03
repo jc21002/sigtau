@@ -17,3 +17,5 @@ export async function deleteReason(id) {
         method: "DELETE"
     });
 }
+export const getReason = (id) => fetchWithAuth(`/reasons/${id}`);
+export const updateReason = (id, data) => fetchWithAuth(`/reasons/${id}`, { method: "PUT", body: JSON.stringify(data) });

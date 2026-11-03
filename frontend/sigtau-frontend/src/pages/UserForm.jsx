@@ -36,6 +36,7 @@ function UserForm() {
         setLoading(true);
         try {
             const payload = { ...form, roleId: Number(form.roleId) };
+            if (editing && !payload.password) delete payload.password;
             if (editing) await updateUser(id, payload);
             else await createUser(payload);
             navigate("/users");

@@ -12,13 +12,9 @@ function Subjects() {
     const [careerId, setCareerId] = useState("");
     const [msg, setMsg] = useState(null);
 
-    const load = useCallback(async () => {
-        try {
-            setItems(await getSubjects(careerId || null));
-        } catch (e) {
-            setMsg({ type: "danger", text: e.message });
-        }
-    }, [careerId]);
+    const load = useCallback(() => getSubjects(careerId || null)
+        .then(setItems)
+        .catch(e => setMsg({ type: "danger", text: e.message })), [careerId]);
 
     useEffect(() => { getCareers().then(setCareers).catch(() => {}); }, []);
     useEffect(() => { load(); }, [load]);

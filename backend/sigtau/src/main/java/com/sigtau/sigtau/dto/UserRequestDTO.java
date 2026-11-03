@@ -20,7 +20,7 @@ public class UserRequestDTO {
     private String phone;
 
     /** Obligatoria al crear; en edición, si viene vacía se conserva la actual. */
-    @Size(min = 6, max = 64, message = "La contraseña debe tener entre 6 y 64 caracteres")
+    @Pattern(regexp = "(?s)^(?:|.{6,64})$", message = "La contraseña debe tener entre 6 y 64 caracteres")
     private String password;
 
     @NotNull(message = "El rol es obligatorio")

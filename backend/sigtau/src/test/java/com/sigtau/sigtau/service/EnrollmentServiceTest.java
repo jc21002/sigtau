@@ -3,6 +3,7 @@ package com.sigtau.sigtau.service;
 import com.sigtau.sigtau.entity.*;
 import com.sigtau.sigtau.repository.*;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -25,7 +26,14 @@ class EnrollmentServiceTest {
     @Mock TutoringRepository tutoringRepository;
     @Mock ReasonRepository reasonRepository;
     @Mock CurrentUserService currentUser;
+    @Mock UserRepository userRepository;
     @InjectMocks EnrollmentService service;
+
+    @BeforeEach
+    void studentLock() {
+        org.mockito.Mockito.lenient().when(userRepository.findByIdForUpdate(1L))
+                .thenReturn(Optional.of(user(1L, "Ana")));
+    }
 
     private User user(Long id, String name) {
         User u = new User();
@@ -92,7 +100,7 @@ class EnrollmentServiceTest {
         e.setId(5L);
         e.setStudent(user(2L, "Luis"));
         e.setTutoring(tutoring(10L, 1));
-        when(enrollmentRepository.findById(5L)).thenReturn(Optional.of(e));
+        when(enrollmentRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(e));
         when(currentUser.get()).thenReturn(user(1L, "Ana"));
         when(currentUser.hasRole("ADMIN")).thenReturn(false);
 
@@ -107,7 +115,7 @@ class EnrollmentServiceTest {
         e.setStudent(user(1L, "Ana"));
         e.setTutoring(t);
         e.setStatus(EnrollmentStatus.ACTIVE);
-        when(enrollmentRepository.findById(5L)).thenReturn(Optional.of(e));
+        when(enrollmentRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(e));
         when(currentUser.get()).thenReturn(user(1L, "Ana"));
         when(currentUser.hasRole("ADMIN")).thenReturn(false);
         when(tutoringRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(t));
@@ -117,5 +125,48 @@ class EnrollmentServiceTest {
 
         assertEquals(2, t.getAvailableSpots());
         assertEquals(EnrollmentStatus.CANCELED, e.getStatus());
+    }
+
+    @Test
+    void enroll_horarioTraslapado_fallaSinCambiarCupos() {
+        Tutoring t = tutoring(10L, 3);
+        Enrollment other = new Enrollment();
+        other.setTutoring(tutoring(11L, 2));
+        when(currentUser.get()).thenReturn(user(1L, "Ana"));
+        when(tutoringRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(t));
+        when(enrollmentRepository.findByStudentIdAndStatus(1L, EnrollmentStatus.ACTIVE)).thenReturn(List.of(other));
+        assertThrows(IllegalArgumentException.class, () -> service.enroll(10L));
+        assertEquals(3, t.getAvailableSpots());
+    }
+
+    @Test
+    void enroll_tutoriaCerrada_falla() {
+        Tutoring t = tutoring(10L, 3);
+        t.setStatus(TutoringStatus.CLOSED);
+        when(currentUser.get()).thenReturn(user(1L, "Ana"));
+        when(tutoringRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(t));
+        assertThrows(IllegalArgumentException.class, () -> service.enroll(10L));
+    }
+
+    @Test
+    void enroll_tutoriaPasada_falla() {
+        Tutoring t = tutoring(10L, 3);
+        t.setTutoringDate(LocalDate.now().minusDays(1));
+        when(currentUser.get()).thenReturn(user(1L, "Ana"));
+        when(tutoringRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(t));
+        assertThrows(IllegalArgumentException.class, () -> service.enroll(10L));
+    }
+
+    @Test
+    void cancel_segundaCancelacion_noDevuelveOtroCupo() {
+        Tutoring t = tutoring(10L, 2);
+        Enrollment e = new Enrollment();
+        e.setStudent(user(1L, "Ana"));
+        e.setTutoring(t);
+        e.setStatus(EnrollmentStatus.CANCELED);
+        when(enrollmentRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(e));
+        when(currentUser.get()).thenReturn(user(1L, "Ana"));
+        assertThrows(IllegalArgumentException.class, () -> service.cancel(5L, null));
+        assertEquals(2, t.getAvailableSpots());
     }
 }

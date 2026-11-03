@@ -24,7 +24,7 @@ function Modalities() {
             }
         }
         fetchData();
-    }, []);
+    }, [navigate]);
 
     const handleDelete = async (id) => {
         if (!window.confirm("¿Seguro que desea eliminar esta modalidad?")) {

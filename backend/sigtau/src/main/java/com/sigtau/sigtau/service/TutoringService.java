@@ -9,7 +9,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -126,8 +126,8 @@ public class TutoringService {
     }
 
     public TutoringResponseDTO save(TutoringRequestDTO dto) {
-        if (dto.getTutoringDate().isBefore(LocalDate.now())) {
-            throw new IllegalArgumentException("La fecha no puede estar en el pasado");
+        if (!dto.getTutoringDate().atTime(dto.getStartTime()).isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("La tutoría debe comenzar en el futuro");
         }
         Tutoring t = new Tutoring();
         apply(t, dto);
@@ -144,6 +144,14 @@ public class TutoringService {
         long active = enrollmentRepository.countByTutoringIdAndStatus(id, EnrollmentStatus.ACTIVE);
         if (dto.getCapacity() < active) {
             throw new IllegalArgumentException("La capacidad no puede ser menor a los inscritos actuales (" + active + ")");
+        }
+        boolean scheduleChanged = !t.getTutoringDate().equals(dto.getTutoringDate())
+                || !t.getStartTime().equals(dto.getStartTime()) || !t.getEndTime().equals(dto.getEndTime());
+        if (scheduleChanged && active > 0) {
+            throw new IllegalArgumentException("No se puede cambiar el horario con estudiantes inscritos; cancele las inscripciones primero");
+        }
+        if (scheduleChanged && !dto.getTutoringDate().atTime(dto.getStartTime()).isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("El nuevo horario debe comenzar en el futuro");
         }
         apply(t, dto);
         t.setAvailableSpots(dto.getCapacity() - (int) active);
