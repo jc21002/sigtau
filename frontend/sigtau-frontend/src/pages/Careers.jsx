@@ -24,7 +24,7 @@ function Careers() {
             }
         }
         fetchData();
-    }, []);
+    }, [navigate]);
 
     const handleDelete = async (id) => {
         if (!window.confirm("¿Seguro que desea eliminar esta carrera?")) {

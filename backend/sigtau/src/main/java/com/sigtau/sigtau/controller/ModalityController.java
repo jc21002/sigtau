@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/modalities")
@@ -32,14 +33,14 @@ public class ModalityController {
 
     //Crear
     @PostMapping
-    public ResponseEntity<ApiResponse> save(@RequestBody ModalityRequestDTO dto) {
+    public ResponseEntity<ApiResponse> save(@Valid @RequestBody ModalityRequestDTO dto) {
         modalityService.save(dto);
         return ResponseEntity.ok(new ApiResponse("Modalidad creada con exito"));
     }
 
     //Actualizar
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse> update(@PathVariable Long id, @RequestBody ModalityRequestDTO dto) {
+    public ResponseEntity<ApiResponse> update(@PathVariable Long id, @Valid @RequestBody ModalityRequestDTO dto) {
         modalityService.update(id, dto);
         return ResponseEntity.ok(new ApiResponse("Modalidad actualizada con exito"));
     }

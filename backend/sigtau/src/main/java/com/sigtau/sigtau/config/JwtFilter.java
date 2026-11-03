@@ -14,8 +14,10 @@ import java.util.List;
 @Component
 public class JwtFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
-    public JwtFilter(JwtUtil jwtUtil) {
+    private final com.sigtau.sigtau.repository.UserRepository userRepository;
+    public JwtFilter(JwtUtil jwtUtil, com.sigtau.sigtau.repository.UserRepository userRepository) {
         this.jwtUtil = jwtUtil;
+        this.userRepository = userRepository;
     }
     //verificar si existe el toke y si es valido
     @Override
@@ -27,7 +29,12 @@ public class JwtFilter extends OncePerRequestFilter {
 
           if (jwtUtil.validateToken(token)) {
              String email = jwtUtil.extractEmail(token);
-             String role = jwtUtil.extractRole(token);
+             var user = userRepository.findByEmail(email);
+             if (user.isEmpty()) {
+                 filterChain.doFilter(request, response);
+                 return;
+             }
+             String role = user.get().getRole().getName();
 
             UsernamePasswordAuthenticationToken auth =
                 new UsernamePasswordAuthenticationToken(

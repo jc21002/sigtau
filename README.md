@@ -62,3 +62,12 @@ un estudiante se registra e inscribe.
 | GET | `/enrollments[?tutoringId=]` | TUTOR (las suyas), ADMIN |
 | PUT | `/enrollments/{id}/cancel` | STUDENT (la suya), ADMIN |
 | CRUD | `/careers`, `/subjects`, `/modalities`, `/reasons`, `/users`, `/roles` | ADMIN |
+
+## Correcciones y verificación
+
+Consultar [la guía de integración y pruebas](docs/ENTREGA_GERSON.md).
+
+- Backend: `cd backend/sigtau && bash mvnw test` (Java 21).
+- Frontend: `cd frontend/sigtau-frontend && npm ci && npm run lint && npm run build`.
+- Interfaz: `npx playwright install chromium && npm run test:e2e` desde el frontend.
+- `.github/workflows/verify.yml` comprueba backend con PostgreSQL de prueba y frontend al subir cambios.

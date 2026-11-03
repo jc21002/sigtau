@@ -13,13 +13,9 @@ function MyEnrollments() {
     const [reasonId, setReasonId] = useState("");
     const [msg, setMsg] = useState(null);
 
-    const load = useCallback(async () => {
-        try {
-            setItems(await getMyEnrollments());
-        } catch (e) {
-            setMsg({ type: "danger", text: e.message });
-        }
-    }, []);
+    const load = useCallback(() => getMyEnrollments()
+        .then(setItems)
+        .catch(e => setMsg({ type: "danger", text: e.message })), []);
 
     useEffect(() => {
         load();

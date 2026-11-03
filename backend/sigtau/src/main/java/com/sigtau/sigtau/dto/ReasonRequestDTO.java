@@ -8,11 +8,10 @@ import lombok.*;
 public class ReasonRequestDTO {
 
     @NotBlank(message = "El nombre es requerido")
-    @Size(max = 255)
+    @Size(max = 100)
     private String name;
 
     @Size(max = 255)
-    @NotBlank(message = "La descripción es requerida")
     private String description;
 
 }

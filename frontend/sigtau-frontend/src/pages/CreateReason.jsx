@@ -1,110 +1,63 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { createReason } from "../services/reasonService";
-import { useNavigate } from "react-router-dom";
+import Banner from "../components/Banner";
+import { createReason, getReason, updateReason } from "../services/reasonService";
 
-function CreateReason() {
-    const [name, setName] = useState("");
-    const [description, setDescription] = useState("");
-    const [loading, setLoading] = useState(false);
+export default function CreateReason() {
+    const { id } = useParams();
     const navigate = useNavigate();
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        if (!name) {
-            alert("Por favor complete el campo nombre");
+    const [form, setForm] = useState({ name: "", description: "" });
+    const [ready, setReady] = useState(!id);
+    const [saving, setSaving] = useState(false);
+    const [msg, setMsg] = useState(null);
+    useEffect(() => {
+        if (!id) return;
+        let active = true;
+        getReason(id).then(data => {
+            if (active) {
+                setForm({ name: data.name, description: data.description || "" });
+                setReady(true);
+            }
+        }).catch(error => {
+            if (active) setMsg({ type: "danger", text: error.message });
+        });
+        return () => { active = false; };
+    }, [id]);
+    async function submit(event) {
+        event.preventDefault();
+        if (!form.name.trim()) {
+            setMsg({ type: "danger", text: "El nombre es obligatorio" });
             return;
         }
-
-        setLoading(true);
+        setSaving(true);
         try {
-            const reason = {
-                name,
-                description
-            };
-
-            await createReason(reason);
-            alert("Motivo creado correctamente");
-            navigate("/exits");
+            const data = { name: form.name.trim(), description: form.description.trim() };
+            if (id) await updateReason(id, data);
+            else await createReason(data);
+            navigate("/reasons");
         } catch (error) {
-            console.error(error);
-            alert("Error al crear motivo");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <>
-            <Navbar />
-            <div className="container mt-4">
-                <div className="row justify-content-center">
-                    <div className="col-12 col-md-6 col-lg-4">
-                        <div className="card shadow-sm">
-                            <div className="card-header bg-primary text-white py-3">
-                                <h4 className="mb-0 text-center">Crear Motivo</h4>
-                            </div>
-                            <div className="card-body p-4">
-                                <form onSubmit={handleSubmit}>
-                                    <div className="mb-3">
-                                        <label className="form-label fw-semibold">
-                                            Nombre del Motivo *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="form-control form-control-lg"
-                                            placeholder="Ej: Conflicto de horario"
-                                            value={name}
-                                            onChange={(e) => setName(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className="mb-4">
-                                        <label className="form-label fw-semibold">
-                                            Descripción
-                                        </label>
-                                        <textarea
-                                            className="form-control"
-                                            placeholder="Descripción opcional del motivo"
-                                            rows="3"
-                                            value={description}
-                                            onChange={(e) => setDescription(e.target.value)}
-                                        />
-                                    </div>
-
-                                    <div className="d-grid gap-2">
-                                        <button
-                                            type="submit"
-                                            className="btn btn-primary btn-lg"
-                                            disabled={loading}
-                                        >
-                                            {loading ? (
-                                                <>
-                                                    <span className="spinner-border spinner-border-sm me-2"></span>
-                                                    Guardando...
-                                                </>
-                                            ) : (
-                                                "Crear Motivo"
-                                            )}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="btn btn-outline-secondary"
-                                            onClick={() => navigate("/exits")}
-                                        >
-                                            Cancelar
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </>
-    );
+            setMsg({ type: "danger", text: error.message });
+        } finally { setSaving(false); }
+    }
+    return <>
+        <Navbar />
+        <main className="container mt-4" style={{ maxWidth: 600 }}>
+            <h2>{id ? "Editar motivo" : "Crear motivo"}</h2>
+            <Banner msg={msg} onClose={() => setMsg(null)} />
+            {!ready && !msg && <p role="status">Cargando...</p>}
+            <form onSubmit={submit} className="card card-body shadow-sm">
+                <fieldset disabled={!ready || saving}>
+                    <label htmlFor="catalog-name" className="form-label">Nombre *</label>
+                    <input id="catalog-name" className="form-control mb-3" required maxLength={100}
+                        value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                    <label htmlFor="catalog-description" className="form-label">Descripción</label>
+                    <textarea id="catalog-description" className="form-control mb-3" maxLength={255}
+                        value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+                    <button className="btn btn-primary" disabled={saving}>{saving ? "Guardando..." : "Guardar"}</button>
+                </fieldset>
+                <button type="button" className="btn btn-outline-secondary mt-2" onClick={() => navigate("/reasons")}>Cancelar</button>
+            </form>
+        </main>
+    </>;
 }
-
-export default CreateReason;

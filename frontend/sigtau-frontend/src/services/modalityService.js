@@ -16,3 +16,5 @@ export async function deleteModality(id) {
         method: "DELETE"
     });
 }
+export const getModality = (id) => fetchWithAuth(`/modalities/${id}`);
+export const updateModality = (id, data) => fetchWithAuth(`/modalities/${id}`, { method: "PUT", body: JSON.stringify(data) });
